@@ -36,12 +36,13 @@ jobs:
       - name: Build
         run: |
           npm i browserify semver-sort
-          browserify main.js -o bundle.js
+          node_modules/browserify/bin/cmd.js main.js -o dist/bundle.js
+          cp index.html dist/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: '.'
+          path: './dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
