@@ -32,9 +32,9 @@
                     <button data-direction="desc" class="sort_btn btn btn-secondary"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort</button>
                 </div>
 
-                <div class="btn-group float-end mt-2" role="group" aria-label="Toggle for coersion">
+                <div class="btn-group float-end mt-2" role="group" aria-label="Toggle for coercion">
                     <input type="checkbox" class="btn-check" id="coerce" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="coerce" title="Attempt to convert invalid Semver to a valid Semver">Force/Coerce?</label>
+                    <label class="btn btn-outline-primary" for="coerce" title="Coerce invalid versions for sorting without changing the output">Force/Coerce?</label>
                 </div>
                 </div>
                 <div class="col-md-6">
@@ -57,15 +57,14 @@
         }
     $('button.sort_btn').on('click', function() {
         var semver = window.semver;
-        var func = window.semver_sort.asc;
-        var vmap = {};
+        var compare = semver.compare;
         var cleanVersions = [];
         var dirtyVersions = [];
 
         $('#errors').val('');
 
         if ($(this).data("direction") === "desc")
-        func = window.semver_sort.desc;
+        compare = semver.rcompare;
         var versions = $('#versionListTextarea').val().split(/[,\n]/);
 
         // Clean it
@@ -77,24 +76,24 @@
             }
             version = version.trim();
 
-            if ($('#coerce').is(':checked')) {
+            var sortVersion = semver.valid(version);
+            if (!sortVersion && $('#coerce').is(':checked')) {
                 var coerced = semver.coerce(version);
-                if (coerced !== null) {
-                    version = coerced.version;
-                } else {
-                    version = coerced;
-                }
+                sortVersion = coerced && coerced.version;
             }
 
-            if (semver.valid(version)) {
-                cleanVersions.push(version);
+            if (sortVersion) {
+                cleanVersions.push({ original: version, sortVersion: sortVersion });
             } else {
                 dirtyVersions.push(version);
                 log("Invalid semver version: [" + version + "], will leave at the end.");
             }
         }
 
-        var sorted = func(cleanVersions);
+        cleanVersions.sort(function(a, b) {
+            return compare(a.sortVersion, b.sortVersion);
+        });
+        var sorted = cleanVersions.map(function(item) { return item.original; });
         dirtyVersions.sort();
         sorted = sorted.concat(dirtyVersions);
 
