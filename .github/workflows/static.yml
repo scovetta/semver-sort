@@ -39,7 +39,8 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build
         run: |
-          npm i browserify semver-sort
+          npm i browserify semver
+          node --test test.js
           node_modules/browserify/bin/cmd.js main.js -o dist/bundle.js
           cp index.html dist/
       - name: Upload artifact
